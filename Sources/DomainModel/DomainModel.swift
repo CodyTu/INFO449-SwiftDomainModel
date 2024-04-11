@@ -77,12 +77,45 @@ public class Job {
     var title: String
     var type: JobType
     
-    func calculateIncome() {
-        
+    init(title: String, type: JobType) {
+        self.title = title
+        self.type = type
     }
     
-    func raise() {
-        
+    func calculateIncome(_ arg: Int) -> Int {
+        switch self.type {
+        case .Hourly(let value):
+            return Int(value) * arg
+        case .Salary(let value):
+            return Int(value)
+        }
+    }
+    
+    func raise(byAmount: Int) -> Job {
+        switch self.type {
+        case .Hourly(let value):
+            return Job(title: self.title, type: Job.JobType.Hourly(value + Double(byAmount)))
+        case .Salary(let value):
+            return Job(title: self.title, type: Job.JobType.Salary(value + UInt(byAmount)))
+        }
+    }
+    
+    func raise(byAmount: Double) -> Job {
+        switch self.type {
+        case .Hourly(let value):
+            return Job(title: self.title, type: Job.JobType.Hourly(value + byAmount))
+        case .Salary(let value):
+            return Job(title: self.title, type: Job.JobType.Salary(value + UInt(byAmount)))
+        }
+    }
+    
+    func raise(byPercent: Double) -> Job {
+        switch self.type {
+        case .Hourly(let value):
+            return Job(title: self.title, type: Job.JobType.Hourly(value + (value * byPercent)))
+        case .Salary(let value):
+            return Job(title: self.title, type: Job.JobType.Salary(value + (value * UInt(byPercent))))
+        }
     }
 }
 
@@ -90,10 +123,69 @@ public class Job {
 // Person
 //
 public class Person {
+    var firstName: String
+    var lastName: String
+    var age: Int
+    var job: Job? {
+        didSet{
+            if age < 18 {
+                job = nil
+            }
+        }
+    }
+    var spouse: Person? {
+        didSet {
+            if age < 18 {
+                spouse = nil
+            }
+        }
+    }
+    
+    init(firstName: String, lastName: String, age: Int) {
+        self.firstName = firstName
+        self.lastName = lastName
+        self.age = age
+    }
+    
+    func toString() -> String{
+        return"[Person: firstName:\(self.firstName) lastName:\(self.lastName) age:\(self.age) job:\(self.job != nil ? "\(job!)" : "nil") spouse:\(spouse != nil ? "\(spouse!)" : "nil")]"
+    }
+    
 }
 
 ////////////////////////////////////
 // Family
 //
 public class Family {
+    var members: [Person]
+    
+    init(spouse1: Person, spouse2: Person) {
+        if (spouse1.spouse == nil && spouse2.spouse == nil) {
+            spouse1.spouse = spouse2
+            spouse2.spouse = spouse1
+            members = [spouse1, spouse2]
+        } else {
+            members = []
+        }
+    }
+    
+    func haveChild(_ child: Person) -> Bool {
+        for i in 0...members.count {
+            if members[i].spouse != nil {
+                if members[i].age > 21 {
+                    members.append(child)
+                    return true
+                }
+            }
+        }
+        return false
+    }
+    
+    func householdIncome() -> Int{
+        var totalIncome = 0
+        for i in 0...members.count {
+            totalIncome += members[i].job!.calculateIncome(2000)
+        }
+        return totalIncome
+    }
 }
